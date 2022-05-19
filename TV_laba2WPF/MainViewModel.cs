@@ -32,6 +32,7 @@ namespace TV_laba2WPF
                 Model.TextColor = OxyColor.FromRgb(100,100,100);
                 Model.PlotAreaBorderColor = OxyColor.FromRgb(100, 100, 100);
                 Model.Series.Add(rectangleBarSeries);
+                Model.Background = OxyColors.AliceBlue;
             }
         }
 

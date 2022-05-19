@@ -6,7 +6,8 @@
         xmlns:oxy="http://oxyplot.org/wpf"
         xmlns:local="clr-namespace:TV_laba2WPF" xmlns:oxy1="clr-namespace:OxyPlot.Series;assembly=OxyPlot"
         mc:Ignorable="d"
-        Title="MainWindow" Height="450" Width="800">
+        Background="AliceBlue"
+        Title="Laba 4" Height="450" Width="1000" ResizeMode="NoResize" WindowState="Minimized" WindowStartupLocation="CenterScreen">
     <Window.DataContext>
         <local:MainViewModel/>
     </Window.DataContext>
@@ -19,31 +20,59 @@
             <RowDefinition Height="30 px"></RowDefinition>
             <RowDefinition Height="30 px"></RowDefinition>
             <RowDefinition Height="30 px"></RowDefinition>
-            <RowDefinition></RowDefinition>
+            <RowDefinition Height="30 px"></RowDefinition>
+            <RowDefinition Height="30 px"></RowDefinition>
+            <RowDefinition Height="30 px"></RowDefinition>
+            <RowDefinition Height="100 px"></RowDefinition>
         </Grid.RowDefinitions>
         <Grid.ColumnDefinitions>
-            <ColumnDefinition Width="115"></ColumnDefinition>
-            <ColumnDefinition Width="50"></ColumnDefinition>
+            <ColumnDefinition Width="135"></ColumnDefinition>
+            <ColumnDefinition Width="60"></ColumnDefinition>
             <ColumnDefinition Width="100"></ColumnDefinition>
             <ColumnDefinition></ColumnDefinition>
+            <ColumnDefinition Width="260"></ColumnDefinition>
             
         </Grid.ColumnDefinitions>
-        <oxy:PlotView Grid.Column="3" Grid.Row="0" Grid.ColumnSpan="2" Grid.RowSpan="7" 
+        <oxy:PlotView Grid.Column="3" Grid.Row="0" Grid.ColumnSpan="1" Grid.RowSpan="10" 
                       x:Name="_plotView" Model="{Binding Model}" />
         <Label Content="Распределение:" Grid.Row="0" Grid.Column="0"></Label>
-        <Label Content="Мат. ожидание:" Grid.Row="1" Grid.Column="0"></Label>
-        <Label Content="Дисперсия:" Grid.Row="2" Grid.Column="0"></Label>
-        <Label Content="Объем выборки:" Grid.Row="3" Grid.Column="0"></Label>
-        <Label Content="Число интервалов:" Grid.Row="4" Grid.Column="0"></Label>
-        <TextBox Grid.Row="1" Grid.Column="1" Height="20" Name="mean">1</TextBox>
-        <TextBox Grid.Row="2" Grid.Column="1" Height="20" Name="dispersion">1</TextBox>
-        <TextBox Grid.Row="3" Grid.Column="1" Height="20" Name="value">100</TextBox>
-        <TextBox Grid.Row="4" Grid.Column="1" Height="20" Name="num_of_intervals">10</TextBox>
-        <ComboBox Grid.Row="0" Grid.Column="1" Height="20" Grid.ColumnSpan="2" Name="distribution_type" SelectedIndex="1">
+        <Label Content="Ядро:" Grid.Row="1" Grid.Column="0"></Label>
+        <Label Content="A:" Grid.Row="2" Grid.Column="0"></Label>
+        <Label Content="B:" Grid.Row="3" Grid.Column="0" Name="B_"></Label>
+        <Label Content="Объем выборки:" Grid.Row="4" Grid.Column="0"></Label>
+        <Label Content="Число интервалов:" Grid.Row="5" Grid.Column="0"></Label>
+        <Label Content="Параметр размытости:" Grid.Row="6" Grid.Column="0"></Label>
+
+        <Label Content="Выборочная средняя:" Grid.Row="0" Grid.Column="4" Name="mathMean"></Label>
+        <Label Content="Выборочная дисперсия:" Grid.Row="1" Grid.Column="4" Name="varianceValue"></Label>
+        <Label Content="Мода:" Grid.Row="2" Grid.Column="4" Name="mode"></Label>
+        <Label Content="Медиана:" Grid.Row="3" Grid.Column="4" Name="median"></Label>
+        <Label Content="Выборочное ср. квадратичное отклонение:" Grid.Row="4" Grid.Column="4" Name="deviation"></Label>
+        
+
+        <TextBox Grid.Row="2" Grid.Column="1" Height="20" Name="mean">1</TextBox>
+        <TextBox Grid.Row="3" Grid.Column="1" Height="20" Name="dispersion">1</TextBox>
+        <TextBox Grid.Row="4" Grid.Column="1" Height="20" Name="val">100</TextBox>
+        <TextBox Grid.Row="5" Grid.Column="1" Height="20" Name="num_of_intervals">10</TextBox>
+        <TextBox Grid.Row="6" Grid.Column="1" Height="20" Name="h">0,7</TextBox>
+        <Image Grid.Row="9" Grid.Column="0" Grid.ColumnSpan="3" Name="image"></Image>
+        <ComboBox Grid.Row="0" Grid.Column="1" Height="20" Grid.ColumnSpan="2" Name="distribution_type" SelectedIndex="1" SelectionChanged="Index_Changed">
             <TextBlock>Экспоненциальное</TextBlock>
             <TextBlock>Нормальное</TextBlock>
             <TextBlock>Равномерное</TextBlock>
         </ComboBox>
-        <Button Content="Построить" Grid.Row="5" Grid.Column="0" Height="20" Click="Button_Click"></Button>
+
+        <ComboBox Grid.Row="1" Grid.Column="1" Height="20" Grid.ColumnSpan="2" Name="kernel_type" SelectedIndex="1" SelectionChanged="Index_Changed_kernel">
+            <TextBlock>Лапласа</TextBlock>
+            <TextBlock>Коши</TextBlock>
+            <TextBlock>Епанечникова</TextBlock>
+            <TextBlock>Сигмоидальное</TextBlock>
+            <TextBlock>Треугольное</TextBlock>
+            <TextBlock>Равномерное</TextBlock>
+            <TextBlock>Экспоненциальное</TextBlock>
+        </ComboBox>
+        
+        <Button Content="Построить с новой выборкой" Grid.Row="7" Grid.Column="0" Height="20" Grid.ColumnSpan="2" Click="Button_Click" Background="GhostWhite"></Button>
+        <Button Content="Построить на основе предыдущей" Grid.Row="8" Grid.Column="0" Height="20" Grid.ColumnSpan="2" Click="Button_Click_Upd" Background="GhostWhite"></Button>
     </Grid>
 </Window>
