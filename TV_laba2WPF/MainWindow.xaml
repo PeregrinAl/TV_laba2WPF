@@ -7,7 +7,7 @@
         xmlns:local="clr-namespace:TV_laba2WPF" xmlns:oxy1="clr-namespace:OxyPlot.Series;assembly=OxyPlot"
         mc:Ignorable="d"
         Background="AliceBlue"
-        Title="Laba 4" Height="450" Width="1000" ResizeMode="NoResize" WindowState="Minimized" WindowStartupLocation="CenterScreen">
+        Title="Laba 4" Height="450" Width="1000" ResizeMode="NoResize" WindowStartupLocation="CenterScreen">
     <Window.DataContext>
         <local:MainViewModel/>
     </Window.DataContext>

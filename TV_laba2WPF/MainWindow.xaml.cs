@@ -46,7 +46,7 @@ namespace TV_laba2WPF
 
         private double expectationEstimate;
         private double varianceEstimate;
-        private double modeEstimate = 0;
+        private List<double> modeEstimate;
         private double medianEstimate;
         private double deviationEstimate;
 
@@ -55,7 +55,10 @@ namespace TV_laba2WPF
         private double sumVarianceEstimate = 0;
         private double maxModeEstimate = 0;
         private double sumMedianEstimate = 0;
+        private double tmp = 0;
         private double sumDeviationEstimate = 0;
+
+        private const double INCRIMENT = 0.01;
 
 
         public MainWindow()
@@ -418,8 +421,8 @@ namespace TV_laba2WPF
                 else if (distribution_type.SelectedIndex == 1)
                 {
                     x_val = new List<double>(new double[value]);
+                    modeEstimate = new List<double>();
                     int disp_y = paramB * value; //дисперсия случ. величины при выборке больше 100 - в N раз больше. Иначе - в (N-1)^2 / N
-                    modeEstimate = 0;
                     maxModeEstimate = 0;
 
                     for (var i = 0; i < value; i++)
@@ -449,9 +452,18 @@ namespace TV_laba2WPF
                                 break;
                             }
                         }
-
-                        lineSeries_rp.Points.Add(new DataPoint(((min + incr * i) + (min + incr * (i + 1))) / 2, Density_Estimate(x_val, ((min + incr * i) + (min + incr * (i + 1))) / 2, myMethodName)));
                         double xMean = ((min + incr * i) + (min + incr * (i + 1))) / 2;
+
+                        lineSeries_rp.Points.Add(new DataPoint(xMean, Density_Estimate(x_val, xMean, myMethodName)));
+                        double o = Math.Round((Density_Estimate(x_val, xMean + INCRIMENT, myMethodName) - Density_Estimate(x_val, xMean, myMethodName)) / INCRIMENT, 4);
+
+                        double derivative = Math.Round((Density_Estimate(x_val, xMean + INCRIMENT, myMethodName) - Density_Estimate(x_val, xMean, myMethodName)) / INCRIMENT, 3);
+
+                        if (derivative < 0 && tmp > 0) {
+                            modeEstimate.Add(Math.Round(xMean, 3));
+                        }
+
+                        tmp = Math.Round((Density_Estimate(x_val, xMean + INCRIMENT, myMethodName) - Density_Estimate(x_val, xMean, myMethodName)) / INCRIMENT, 3);
 
                         sumExpectationEstimate += xMean * ((double)frequency[i] / value); // мат ожидание без /n
 
@@ -472,7 +484,10 @@ namespace TV_laba2WPF
                     median.Content = "Медиана: " + Math.Round(Statistics.Median(x_val), 4);
                     varianceEstimate = Math.Round(Statistics.PopulationVariance(x_val), 4);
                     varianceValue.Content = "Выборочная дисперсия: " + varianceEstimate;
-                    //mode.Content = "Мода: " + maxModeEstimate;
+                    mode.Content = "Мода: ";
+                    foreach (var x in modeEstimate) {
+                        mode.Content += x + " ";
+                    }
                     deviation.Content = "Выборочное ср. отклонение: " + Math.Round(Math.Sqrt(varianceEstimate), 4);
 
                     lineSeries.Points.Add(new DataPoint(x_, y_));
