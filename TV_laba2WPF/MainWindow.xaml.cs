@@ -28,8 +28,8 @@ namespace TV_laba2WPF
     {
         private double sum = 0;
         private int value;
-        private int paramA;
-        private int paramB;
+        private double paramA;
+        private double paramB;
         private int numOfIntervals;
         private List<double> x_val;
         private int[] frequency;
@@ -142,7 +142,7 @@ namespace TV_laba2WPF
         private void Mode(double xMean) {
             double derivative = Math.Round((Density_Estimate(x_val, xMean + INCRIMENT, myMethodName) - Density_Estimate(x_val, xMean, myMethodName)) / INCRIMENT, 3);
 
-            if (derivative < 0 && tmp > 0)
+            if (derivative <= 0 && tmp > 0)
             {
                 modeEstimate.Add(Math.Round(xMean, 3));
             }
@@ -203,8 +203,8 @@ namespace TV_laba2WPF
             {
                 mn = DataContext as MainViewModel;
                 value = Convert.ToInt32(val.Text);
-                paramA = Convert.ToInt32(mean.Text);
-                paramB = Convert.ToInt32(dispersion.Text);
+                paramA = Convert.ToDouble(mean.Text);
+                paramB = Convert.ToDouble(dispersion.Text);
                 numOfIntervals = Convert.ToInt32(num_of_intervals.Text);
                 frequency = new int[numOfIntervals];
                 h.Text.Replace('.', ',');
@@ -232,9 +232,12 @@ namespace TV_laba2WPF
             lineSeries_rp.Points.Add(new DataPoint(min, Density_Estimate(x_val, min, myMethodName)));
             #endregion charts
             modeEstimate.Clear();
+            double maxVal = 0;
+            double maxMode = 0;
 
             if (distribution_type.SelectedIndex == 0)
             {
+                double xiSquare = 0;
                 x_val.Sort();
                 for (int i = 0; i < numOfIntervals; i++)
                 {
@@ -252,14 +255,37 @@ namespace TV_laba2WPF
                     }
                     xMean = ((min + incr * i) + (min + incr * (i + 1))) / 2;
                     
-                    lineSeries_rp.Points.Add(new DataPoint(((min + incr * i) + (min + incr * (i + 1))) / 2, Density_Estimate(x_val, ((min + incr * i) + (min + incr * (i + 1))) / 2, myMethodName)));
+                    lineSeries_rp.Points.Add(new DataPoint(xMean, Density_Estimate(x_val, xMean, myMethodName)));
                     Mode(xMean);
-                    if (i == 0) lineSeries.Points.Add(new DataPoint(min + incr * i, paramA * Math.Exp(-paramA * 0)));
-                    else lineSeries.Points.Add(new DataPoint(min + incr * (i + 1), paramA * Math.Exp(-paramA * xMean)));
+                    xiSquare += Math.Pow((double)frequency[i] / value - paramA * Math.Exp(-paramA * xMean), 2) / paramA * Math.Exp(-paramA * xMean);
+                    if (i == 0)
+                    {
+                        double dotY = paramA * Math.Exp(-paramA * 0);
+                        lineSeries.Points.Add(new DataPoint(min + incr * i, dotY));
+                    }
+                    else
+                    {
+                        double dotY = paramA * Math.Exp(-paramA * xMean);
+                        lineSeries.Points.Add(new DataPoint(min + incr * (i + 1), dotY));
+                    }
+
+                    if (maxVal < (double)frequency[i] / value / incr)
+                    {
+                        maxVal = (double)frequency[i] / value / incr;
+                        maxMode = xMean;
+                    }
+
                     rectangleBarSeries.Items.Add(new RectangleBarItem(min + incr * i, 0, min + incr * (i + 1), (double)frequency[i] / value / incr));
                 }
                 lineSeries_rp.Points.Add(new DataPoint(max, Density_Estimate(x_val, max, myMethodName)));
 
+                mode.Content = "Мода(по ядерной оценке): ";
+                foreach (var x in modeEstimate)
+                {
+                    mode.Content += x + " ";
+                }
+                modeT.Content = "Мода(по гистограмме): " + Math.Round(maxMode, 3);
+                xi.Content = "Критерий хи-квадрат: " + Math.Round(xiSquare, 3);
                 mn.Model.Series.Add(rectangleBarSeries);
                 mn.Model.Series.Add(lineSeries);
                 mn.Model.Series.Add(lineSeries_rp);
@@ -269,7 +295,7 @@ namespace TV_laba2WPF
 
             else if (distribution_type.SelectedIndex == 1)
             {
-                int disp_y = paramB * value; //дисперсия случ. величины при выборке больше 100 - в N раз больше. Иначе - в (N-1)^2 / N
+                double xiSquare = 0;
 
                 x_val.Sort();
 
@@ -293,8 +319,14 @@ namespace TV_laba2WPF
                     xMean = ((min + incr * i) + (min + incr * (i + 1))) / 2;
                     Mode(xMean);
                     double y = (1 / (paramB * Math.Sqrt(2 * Math.PI))) * Math.Exp((-1 * ((Math.Pow(xMean - paramA, 2)) / (2 * Math.Pow(paramB, 2)))));
-                    lineSeries_rp.Points.Add(new DataPoint(((min + incr * i) + (min + incr * (i + 1))) / 2, Density_Estimate(x_val, ((min + incr * i) + (min + incr * (i + 1))) / 2, myMethodName)));
+                    lineSeries_rp.Points.Add(new DataPoint(xMean, Density_Estimate(x_val, xMean, myMethodName)));
 
+                    xiSquare += Math.Pow((double)frequency[i] / value - y, 2) / y;
+                    if (maxVal < (double)frequency[i] / value / incr)
+                    {
+                        maxVal = (double)frequency[i] / value / incr;
+                        maxMode = xMean;
+                    }
 
                     lineSeries.Points.Add(new DataPoint(xMean, y));
                     rectangleBarSeries.Items.Add(new RectangleBarItem(min + incr * i, 0, min + incr * (i + 1), (double)frequency[i] / value / incr));
@@ -302,6 +334,13 @@ namespace TV_laba2WPF
                 lineSeries_rp.Points.Add(new DataPoint(max, Density_Estimate(x_val, max, myMethodName)));
                 double x_ = min + incr * numOfIntervals;
                 y_ = (1 / (paramB * Math.Sqrt(2 * Math.PI))) * Math.Exp((-1 * ((Math.Pow(x_ - paramA, 2)) / (2 * Math.Pow(paramB, 2)))));
+                mode.Content = "Мода(по ядерной оценке): ";
+                foreach (var x in modeEstimate)
+                {
+                    mode.Content += x + " ";
+                }
+                modeT.Content = "Мода(по гистограмме): " + Math.Round(maxMode, 3);
+                xi.Content = "Критерий хи-квадрат: " + Math.Round(xiSquare, 3);
                 lineSeries.Points.Add(new DataPoint(x_, y_));
                 mn.Model.Series.Add(rectangleBarSeries);
                 mn.Model.Series.Add(lineSeries);
@@ -311,8 +350,12 @@ namespace TV_laba2WPF
 
             else {
                 x_val.Sort();
+                double xiSquare = 0;
 
-                if (paramB - paramA != 0) lineSeries.Points.Add(new DataPoint(min, 1 / (max - min)));
+                if (paramB - paramA != 0)
+                {
+                    lineSeries.Points.Add(new DataPoint(min, 1 / (max - min)));
+                }
 
                 lineSeries_rp.Points.Add(new DataPoint(min, Density_Estimate(x_val, min, myMethodName)));
 
@@ -332,17 +375,27 @@ namespace TV_laba2WPF
                     xMean = ((min + incr * i) + (min + incr * (i + 1))) / 2;
                     Mode(xMean);
 
+                    xiSquare += Math.Pow((double)frequency[i] / value - (1 / (max - min)), 2) / (1 / (max - min));
+
+                    if (maxVal < (double)frequency[i] / value / incr)
+                    {
+                        maxVal = (double)frequency[i] / value / incr;
+                        maxMode = xMean;
+                    }
+
                     rectangleBarSeries.Items.Add(new RectangleBarItem(min + incr * i, 0, min + incr * (i + 1), (double)frequency[i] / value / incr));
-                    lineSeries_rp.Points.Add(new DataPoint(((min + incr * i) + (min + incr * (i + 1))) / 2, Density_Estimate(x_val, ((min + incr * i) + (min + incr * (i + 1))) / 2, myMethodName)));
+                    lineSeries_rp.Points.Add(new DataPoint(xMean, Density_Estimate(x_val, xMean, myMethodName)));
                 }
                 lineSeries_rp.Points.Add(new DataPoint(max, Density_Estimate(x_val, max, myMethodName)));
                 if (paramB - paramA != 0)
                 {
-                    mode.Content = "Мода: ";
+                    mode.Content = "Мода(по ядерной оценке): ";
                     foreach (var x in modeEstimate)
                     {
                         mode.Content += x + " ";
                     }
+                    modeT.Content = "Мода(по гистограмме): " + Math.Round(maxMode, 3);
+                    xi.Content = "Критерий хи-квадрат: " + Math.Round(xiSquare, 3);
                     lineSeries.Points.Add(new DataPoint(min + incr * numOfIntervals, 1 / (max - min)));
                     mn.Model.Series.Add(rectangleBarSeries);
                     mn.Model.Series.Add(lineSeries);
@@ -379,18 +432,23 @@ namespace TV_laba2WPF
 
                 expectationEstimate = 0;
                 modeEstimate.Clear();
+                double maxVal = 0;
+                double maxMode = 0;
+                double xiSquare = 0;
 
                 if (distribution_type.SelectedIndex == 0)
                 {
-                    x_val = new List<double>(new double[value]);
+                    x_val = new List<double>(new double[value]); //формирование массива для выборки
+                    
+
                     for (var i = 0; i < value; i++)
                     {
-                        x_val[i] = (double)-1 / paramA * Math.Log(rand.NextDouble());
+                        x_val[i] = (double)-1 / paramA * Math.Log(rand.NextDouble()); //датчик экспоненц. распределения
                     }
+
                     min = x_val.Min();
                     max = x_val.Max();
                     incr = (double)(Math.Abs(min) + Math.Abs(max)) / numOfIntervals;
-                    double xMean;
 
                     x_val.Sort();
                     lineSeries_rp.Points.Add(new DataPoint(min, Density_Estimate(x_val, min, myMethodName)));
@@ -407,15 +465,21 @@ namespace TV_laba2WPF
                                 break;
                             }
                         }
-                        lineSeries_rp.Points.Add(new DataPoint(((min + incr * i) + (min + incr * (i + 1))) / 2, Density_Estimate(x_val, ((min + incr * i) + (min + incr * (i + 1))) / 2, myMethodName)));
+                        double xMean = ((min + incr * i) + (min + incr * (i + 1))) / 2;
+                        lineSeries_rp.Points.Add(new DataPoint(xMean, Density_Estimate(x_val, xMean, myMethodName)));
 
-                        xMean = ((min + incr * i) + (min + incr * (i + 1))) / 2;
+                        xiSquare += Math.Pow((double)frequency[i] / value - paramA * Math.Exp(-paramA * xMean), 2) / paramA * Math.Exp(-paramA * xMean);
+
                         Mode(xMean);
                         sumExpectationEstimate += xMean * ((double)frequency[i] / value); // мат ожидание без /n
 
                         if (i == 0) lineSeries.Points.Add(new DataPoint(min + incr * i, paramA * Math.Exp(-paramA * 0)));
                         else lineSeries.Points.Add(new DataPoint(min + incr * (i + 1), paramA * Math.Exp(-paramA * xMean)));
                         rectangleBarSeries.Items.Add(new RectangleBarItem(min + incr * i, 0, min + incr * (i + 1), (double)frequency[i] / value / incr));
+                        if (maxVal < (double)frequency[i] / value / incr) {
+                            maxVal = (double)frequency[i] / value / incr;
+                            maxMode = xMean;
+                        }
                     }
                     lineSeries_rp.Points.Add(new DataPoint(max, Density_Estimate(x_val, max, myMethodName)));
 
@@ -425,11 +489,13 @@ namespace TV_laba2WPF
                     varianceEstimate = Math.Round(Statistics.PopulationVariance(x_val), 4);
                     varianceValue.Content = "Выборочная дисперсия: " + varianceEstimate;
                     deviation.Content = "Выборочное ср. отклонение: " + Math.Round(Math.Sqrt(varianceEstimate), 4);
-                    mode.Content = "Мода: ";
+                    mode.Content = "Мода(по ядерной оценке): ";
                     foreach (var x in modeEstimate)
                     {
                         mode.Content += x + " ";
                     }
+                    modeT.Content = "Мода(по гистограмме): " + Math.Round(maxMode, 3);
+                    xi.Content = "Критерий хи-квадрат: " + Math.Round(xiSquare, 3);
 
                     mn.Model.Series.Clear();
                     mn.Model.Series.Add(rectangleBarSeries);
@@ -442,7 +508,6 @@ namespace TV_laba2WPF
                 else if (distribution_type.SelectedIndex == 1)
                 {
                     x_val = new List<double>(new double[value]);
-                    int disp_y = paramB * value; //дисперсия случ. величины при выборке больше 100 - в N раз больше. Иначе - в (N-1)^2 / N
 
                     for (var i = 0; i < value; i++)
                     {
@@ -482,7 +547,13 @@ namespace TV_laba2WPF
 
                         double y = (1 / (paramB * Math.Sqrt(2 * Math.PI))) * Math.Exp((-1 * ((Math.Pow(xMean - paramA, 2)) / (2 * Math.Pow(paramB, 2)))));
 
+                        xiSquare += Math.Pow((double)frequency[i] / value - y, 2) / y;
 
+                        if (maxVal < (double)frequency[i] / value / incr)
+                        {
+                            maxVal = (double)frequency[i] / value / incr;
+                            maxMode = xMean;
+                        }
 
                         lineSeries.Points.Add(new DataPoint(xMean, y));
                         rectangleBarSeries.Items.Add(new RectangleBarItem(min + incr * i, 0, min + incr * (i + 1), (double)frequency[i] / value / incr));
@@ -496,12 +567,13 @@ namespace TV_laba2WPF
                     median.Content = "Медиана: " + Math.Round(Statistics.Median(x_val), 4);
                     varianceEstimate = Math.Round(Statistics.PopulationVariance(x_val), 4);
                     varianceValue.Content = "Выборочная дисперсия: " + varianceEstimate;
-                    mode.Content = "Мода: ";
+                    mode.Content = "Мода(по ядерной оценке): ";
                     foreach (var x in modeEstimate) {
                         mode.Content += x + " ";
                     }
                     deviation.Content = "Выборочное ср. отклонение: " + Math.Round(Math.Sqrt(varianceEstimate), 4);
-
+                    xi.Content = "Критерий хи-квадрат: " + Math.Round(xiSquare, 3);
+                    modeT.Content = "Мода(по гистограмме): " + Math.Round(maxMode, 3);
                     lineSeries.Points.Add(new DataPoint(x_, y_));
                     mn.Model.Series.Clear();
                     mn.Model.PlotType = PlotType.XY;
@@ -550,24 +622,34 @@ namespace TV_laba2WPF
                         double xMean = ((min + incr * i) + (min + incr * (i + 1))) / 2;
                         Mode(xMean);
 
+                        xiSquare += Math.Pow((double)frequency[i] / value - (1 / (max - min)), 2) / (1 / (max - min));
+
                         sumExpectationEstimate += xMean * ((double)frequency[i] / value); // мат ожидание без /n
                         lineSeries_rp.Points.Add(new DataPoint(xMean, Density_Estimate(x_val, xMean, myMethodName)));
                         rectangleBarSeries.Items.Add(new RectangleBarItem(min + incr * i, 0, min + incr * (i + 1), (double)frequency[i] / value / incr));
+
+                        if (maxVal < (double)frequency[i] / value / incr)
+                        {
+                            maxVal = (double)frequency[i] / value / incr;
+                            maxMode = xMean;
+                        }
                     }
                     sum = 0;
                     lineSeries_rp.Points.Add(new DataPoint(min + incr * numOfIntervals, Density_Estimate(x_val, min + incr * numOfIntervals, myMethodName)));
 
-                    mode.Content = "Мода: ";
+                    mode.Content = "Мода(по ядерной оценке): ";
                     foreach (var x in modeEstimate)
                     {
                         mode.Content += x + " ";
                     }
+                    modeT.Content = "Мода(по гистограмме): " + Math.Round(maxMode, 3);
                     expectationEstimate = sumExpectationEstimate / value;
                     mathMean.Content = "Выборочное среднее: " + Math.Round(expectationEstimate, 4);
                     median.Content = "Медиана: " + Math.Round(Statistics.Median(x_val), 4);
                     varianceEstimate = Math.Round(Statistics.PopulationVariance(x_val), 4);
                     varianceValue.Content = "Выборочная дисперсия: " + varianceEstimate;
                     deviation.Content = "Выборочное ср. отклонение: " + Math.Round(Math.Sqrt(varianceEstimate), 4);
+                    xi.Content = "Критерий хи-квадрат: " + Math.Round(xiSquare, 3);
 
                     if (paramB - paramA != 0)
                     {
